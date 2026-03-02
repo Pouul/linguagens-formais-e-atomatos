@@ -1,49 +1,75 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-void PertenceAFD(char *palavras, char *alfabeto, char *estados, char *estadoInicial, char *estadosFinais, char **transicoes, int linhasTransicoes) {
+void PertenceAFD(char **palavras, char *alfabeto, char *estados, char *estadoInicial, char *estadosFinais, char **transicoes, int linhasPalavras, int linhasTransicoes) {
+    FILE *arquivo;
+
+    arquivo = fopen("resultado.txt", "a");
+
+    if (arquivo == NULL) {
+        printf("Erro ao criar arquivo\n");
+        return ;
+    }
+
     int ilp = 0; //indice para linhda de palavras
-    int icp = 0; //indice para colunas de palavras
-    int ilt = 0; //indice para linha de transições
-    int ict = 0; //indice para coluna de transições
 
-    char estadoAtual = estadoInicial[0];
     // loop para percorrer as palavras
-    while(palavras[ilp] != '\n'){
-        //loop para percorrer os caracteres da palavra
-        while (palavras[ilp][icp] != '\n'){
-            char simbolo = palavras[ilp][icp];
-            boolean transicaoEncontrada = false;
+    while(ilp != linhasPalavras){
+        int icp = 0; //indice para colunas de palavras
+        int ilt = 0; //indice para linha de transições
 
-            //loop para achar a transição
-            while (transicaoEncontrada == false && transicoes[ilt][0] != '\n'){
-                while (transicoes[ilt][ict] != '\n'){
-                    if (transicoes[ilt][0] == estadoAtual && transicoes[ilt][1] == simbolo){
-                        estadoAtual = transicoes[ilt][2];
-                        transicaoEncontrada = true; 
-                        break;
-                    }
-                    ict++;
+        char estadoAtual = estadoInicial[0];
+
+        //loop para percorrer os caracteres da palavra
+        while (palavras[ilp][icp] != '\0'){
+            char simbolo = palavras[ilp][icp];
+            bool transicaoEncontrada = false;
+
+            //loop para achar a transição'
+            while (transicaoEncontrada == false && ilt != linhasTransicoes){
+                if (transicoes[ilt][0] == estadoAtual && transicoes[ilt][1] == simbolo){
+                    estadoAtual = transicoes[ilt][2];
+                    transicaoEncontrada = true; 
+                    break;
                 }
+                
+                
                 if (transicaoEncontrada == false){
                     ilt++;
-                    ict = 0;
+                    
                 } 
             }//saiu do loop de transições
+
             if (transicaoEncontrada == false){
-                printf("Palavra não pertence ao AFD\n");
-                 //se não encontrou a transição, a palavra não pertence ao AFD
+                fprintf(arquivo, "M rejeita a palavra <%s> \n", palavras[ilp]);
+                //se não encontrou a transição, a palavra não pertence ao AFD
+                //coloca no arquivo a palavra que rejeita
             }
-            int i = 0;//
-            while (estadosFinais[i] != '\n'){
-                if (estadoAtual == estadosFinais[i]){
-                    return true; //se o estado atual é um estado final, a palavra pertence ao AFD
-                }
-                i++;
-            }
-            return false; //se o estado atual não é um estado final, a palavra não pertence ao AFD
+            
+
+            icp++;//proximo caracter
         }
+        int i = 0;
+        bool aceito = false;
+        //verifica se foi aceito
+        while (estadosFinais[i] != '\0'){
+            if (estadoAtual == estadosFinais[i]){
+                aceito = true;
+                break;
+            }
+            i++;
+        }
+        //se nao foi aceito coloca no arquivo de saida que a palavra foi aceita
+        if (aceito == true){
+            fprintf(arquivo, "M aceita a palavra <%s> \n", palavras[ilp]);
+        }
+        else{
+            fprintf(arquivo, "M rejeita a palavra <%s> \n", palavras[ilp]);
+        }
+        ilp++;//proxima palavra
     }
+
 }
 
 
@@ -72,12 +98,9 @@ int main(int argc, char *argv[]) {
     char *estadosFinais = malloc(tamanhoEstadosFinais * sizeof(char));
 
     //Iniciando transições
-    int linhasTransicoes = 1;
-    int colunasTransicoes = 3;
-    char **transicoes = malloc(linhasTransicoes * sizeof(char*));
-    for (int i = 0; i < linhasTransicoes; i++) {
-        transicoes[i] = malloc(colunasTransicoes * sizeof(char));
-    }
+    int linhasTransicoes = 0;
+    int colunasTransicoes = 0;
+    char **transicoes = NULL;
 
     //Iniciando palavras
     int linhasPalavras = 0;
@@ -187,30 +210,33 @@ int main(int argc, char *argv[]) {
 
         if (linha[0] == 'T') {
             int il = 1; //começa a ler após o "T" iL - linha do arquivo
-            int ic = 0; //coluna
+            
             while (linha[il] != '\n'){//vai até \n
                 if (linha[il] == ' '){// se for espaço pula
                     il++;
                     continue;
                 }
-                if (ic >= colunasTransicoes) {
-                    printf("Erro: número de colunas excedido para transições.\n");
-                    return 1;
-                }
-                
-                transicoes[linhasTransicoes - 1][ic] = linha[il];
-                il++;
-                ic++;
+                if (colunasTransicoes == 0){
+                    linhasTransicoes ++;
+                    transicoes = realloc(transicoes, linhasTransicoes * sizeof(char*));
+                    transicoes[linhasTransicoes - 1] = NULL;
             }
+                
+                transicoes[linhasTransicoes - 1] = realloc(transicoes[linhasTransicoes - 1], (colunasTransicoes + 1) * sizeof(char));
+                transicoes[linhasTransicoes - 1][colunasTransicoes] = linha[il];
+                il++;
+                colunasTransicoes++;
+            }
+            transicoes[linhasTransicoes - 1] = realloc(transicoes[linhasTransicoes - 1], (colunasTransicoes + 1) * sizeof(char));
+            transicoes[linhasTransicoes - 1][colunasTransicoes] = '\0';
+            
+
             printf("T: ");
-            for (int iT = 0; iT < ic; iT++) {
+            for (int iT = 0; iT < colunasTransicoes; iT++) {
                 printf("%c ", transicoes[linhasTransicoes - 1][iT]);
             }
 
-            linhasTransicoes++;//aumenta o número de linhas
-            transicoes = realloc(transicoes, linhasTransicoes * sizeof(char*));
-            transicoes[linhasTransicoes - 1] = malloc(colunasTransicoes * sizeof(char));
-
+            colunasTransicoes = 0;
             
             printf("\n");
             continue;
@@ -238,6 +264,8 @@ int main(int argc, char *argv[]) {
                 colunasPalavras++;
                 
             }
+            palavras[linhasPalavras - 1] = realloc(palavras[linhasPalavras - 1], (colunasPalavras + 1) * sizeof(char));
+            palavras[linhasPalavras - 1][colunasPalavras] = '\0';
             
             printf("P: ");
             for (int iP = 0; iP < colunasPalavras; iP++) {
@@ -252,7 +280,7 @@ int main(int argc, char *argv[]) {
     
     }
 
-
+    PertenceAFD(palavras,Alfabeto,Estados,estadosIniciais,estadosFinais,transicoes,linhasPalavras,linhasTransicoes);
 
     fclose(arquivo);
 
