@@ -22,37 +22,30 @@ void PertenceAFD(char **palavras, char *alfabeto, char *estados, char *estadoIni
         char estadoAtual = estadoInicial[0];
 
         //loop para percorrer os caracteres da palavra
+        
         while (palavras[ilp][icp] != '\0'){
+            
             char simbolo = palavras[ilp][icp];
             bool transicaoEncontrada = false;
 
-            //loop para achar a transição'
+            //loop para achar a transição
             while (transicaoEncontrada == false && ilt != linhasTransicoes){
                 if (transicoes[ilt][0] == estadoAtual && transicoes[ilt][1] == simbolo){
                     estadoAtual = transicoes[ilt][2];
                     transicaoEncontrada = true; 
                     break;
                 }
-                
-                
+
                 if (transicaoEncontrada == false){
                     ilt++;
-                    
                 } 
             }//saiu do loop de transições
-
-            if (transicaoEncontrada == false){
-                fprintf(arquivo, "M rejeita a palavra <%s> \n", palavras[ilp]);
-                //se não encontrou a transição, a palavra não pertence ao AFD
-                //coloca no arquivo a palavra que rejeita
-            }
-            
-
+            ilt = 0;//reinicia o indice da linha do transicoes
             icp++;//proximo caracter
         }
         int i = 0;
         bool aceito = false;
-        //verifica se foi aceito
+        //verifica se foi aceito,estadual estando em estados finais
         while (estadosFinais[i] != '\0'){
             if (estadoAtual == estadosFinais[i]){
                 aceito = true;

@@ -14,7 +14,7 @@ q A
 # Estados Finais:
 F C
 
-# Transições
+# Transições:
 T A a A
 T A b B
 T B a A
@@ -22,7 +22,7 @@ T B b C
 T C a C
 T C b C
 
-# Palavras
+# Palavras:
 P abababbababa
 P aaabaababaa
 P abb
